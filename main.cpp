@@ -1,6 +1,6 @@
 // Winter'24
 // Instructor: Diba Mirza
-// Student name: 
+// Student name: Henry Li
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -34,23 +34,19 @@ int main(int argc, char** argv){
         exit(1);
     }
   
-    // Create an object of a STL data-structure to store all the movies
+    MovieDatabase db;
 
     string line, movieName;
     double movieRating;
-    // Read each file and store the name and rating
     while (getline (movieFile, line) && parseLine(line, movieName, movieRating)){
-            // Use std::string movieName and double movieRating
-            // to construct your Movie objects
-            // cout << movieName << " has rating " << movieRating << endl;
-            // insert elements into your data structure
+        db.addMovie(movieName, movieRating);
     }
 
     movieFile.close();
 
     if (argc == 2){
-            //print all the movies in ascending alphabetical order of movie names
-            return 0;
+        db.printAllMovies();
+        return 0;
     }
 
     ifstream prefixFile (argv[2]);
@@ -67,19 +63,82 @@ int main(int argc, char** argv){
         }
     }
 
-    //  For each prefix,
-    //  Find all movies that have that prefix and store them in an appropriate data structure
-    //  If no movie with that prefix exists print the following message
-    cout << "No movies found with prefix "<<"<replace with prefix>" << endl;
+    vector<pair<string, Movie>> bestMovies;
 
-    //  For each prefix,
-    //  Print the highest rated movie with that prefix if it exists.
-    cout << "Best movie with prefix " << "<replace with prefix>" << " is: " << "replace with movie name" << " with rating " << std::fixed << std::setprecision(1) << "replace with movie rating" << endl;
+    for (const string& prefix : prefixes) {
+        vector<Movie> matches = db.getMoviesWithPrefix(prefix);
+        if (matches.empty()) {
+            cout << "No movies found with prefix " << prefix << endl;
+        } else {
+            for (const Movie& m : matches) {
+                cout << m.name << ", " << fixed << setprecision(1) << m.rating << endl;
+            }
+            cout << endl;
+        }
+        Movie best = db.getBestMovieWithPrefix(prefix);
+        if (best.rating >= 0) {
+            bestMovies.push_back({prefix, best});
+        }
+    }
+
+    for (const auto& p : bestMovies) {
+        cout << "Best movie with prefix " << p.first << " is: " << p.second.name << " with rating " << fixed << setprecision(1) << p.second.rating << endl;
+    }
 
     return 0;
 }
 
-/* Add your run time analysis for part 3 of the assignment here as commented block*/
+/*
+Part 3a: Time Complexity Analysis
+
+Parameters: 
+n = number of movies
+m = number of prefixes
+k = max movies starting with a prefix
+l = max length of a movie title
+
+I used a std::map (which is a balanced BST) to store all n movies, keyed by their name.
+
+For each of the m prefixes, the algorithm does the following:
+1. Find the first movie >= prefix using lower_bound. This takes O(log n) comparisons, each costing O(l), so that's O(l * log n).
+2. Iterate through the map to find the k matching movies. Checking the prefix takes O(l), so O(k * l).
+3. Sort these k movies by rating/name for printing. This takes O(k * log k * l).
+4. Scanning for the single best movie is also linear in k, so O(k * l).
+
+Adding that all up for m prefixes gives a total time complexity of:
+O(m * (l * log n + k * l + k * log k * l))
+
+Simplifying this big expression by factoring out l and dropping lower order terms:
+O(m * l * (log n + k * log k))
+
+Here are the actual runtimes I measured on the CSIL machines using prefix_large.txt:
+- input_20_random.csv: ~11 ms
+- input_100_random.csv: ~12 ms
+- input_1000_random.csv: ~12 ms
+- input_76920_random.csv: ~145 ms
+
+The trend makes sense because the runtime grows logically with n (log n factor) and the output size.
+
+Part 3b: Space Complexity Analysis
+
+My space usage is dominated by storing the movie titles themselves.
+- Storing n movies in the map takes O(n * l).
+- Storing m prefixes takes O(m * l).
+- The temporary vector of matches uses at most O(k * l).
+- Storing the list of best movies takes O(m * l).
+
+So the Total Space is O(n * l + m * l + k * l).
+Since n (total movies) is generally larger than m (prefixes) or k (matches), this simplifies to:
+O(n * l)
+
+Part 3c: Trade-off Analysis
+
+I primarily designed this for low time complexity.
+I chose a std::map because it keeps keys sorted. This lets me use lower_bound to jump straight to the relevant movies for any prefix, avoiding a scan of the whole list (which would be O(n)). This makes it much faster when n is large.
+
+Was I able to achieve low space complexity as well?
+Yes, I think so. The space complexity is O(n * l), which is about the minimum required to store the input data. The map adds small overhead for the tree structure, but it doesn't duplicate the string data significantly like a trie might if implemented naively with full pointers. So it strikes a good balance of fast lookups without using lots of RAM.
+*/
 
 bool parseLine(string &line, string &movieName, double &movieRating) {
     int commaIndex = line.find_last_of(",");
