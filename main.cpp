@@ -90,54 +90,20 @@ int main(int argc, char** argv){
 
 /*
 Part 3a: Time Complexity Analysis
+My time complexity can be affected by all of the following parameters: n (movies), m (prefixes), k (max movie matches per prefix), and l (max title length). Using a sorted map, each prefix search involves a binary search O(l·log n), a scan of its k matches   O(k·l), and a sort of those matches O(k·log k·l). The latter sort dominates time complexity, so one prefix is reflected by O(l·log n + k·log k·l), while all m prefixes are reflected by O(m·l·(log n + k·log k)). 
 
-Parameters: 
-n = number of movies
-m = number of prefixes
-k = max movies starting with a prefix
-l = max length of a movie title
-
-I used a std::map (which is a balanced BST) to store all n movies, keyed by their name.
-
-For each of the m prefixes, the algorithm does the following:
-1. Find the first movie >= prefix using lower_bound. This takes O(log n) comparisons, each costing O(l), so that's O(l * log n).
-2. Iterate through the map to find the k matching movies. Checking the prefix takes O(l), so O(k * l).
-3. Sort these k movies by rating/name for printing. This takes O(k * log k * l).
-4. Scanning for the single best movie is also linear in k, so O(k * l).
-
-Adding that all up for m prefixes gives a total time complexity of:
-O(m * (l * log n + k * l + k * log k * l))
-
-Simplifying this big expression by factoring out l and dropping lower order terms:
-O(m * l * (log n + k * log k))
-
-Here are the actual runtimes I measured on the CSIL machines using prefix_large.txt:
-- input_20_random.csv: ~11 ms
-- input_100_random.csv: ~12 ms
-- input_1000_random.csv: ~12 ms
-- input_76920_random.csv: ~145 ms
-
-The trend makes sense because the runtime grows logically with n (log n factor) and the output size.
+Running times measured with prefix_large.txt and the following input files:
+input_20_random.csv: 0.011 s
+input_100_random.csv: 0.011 s
+input_1000_random.csv: 0.013 s
+input_76920_random.csv: 0.140 s
+The upward trend in my measured runtimes aligns with the upward trend in my proposed time complexity. As n and k increase, log n and k * log k inflate, driving an overall increase in time complexity.
 
 Part 3b: Space Complexity Analysis
+All movie titles, ratings, and prefixes in the map are stored, as well as a temporary match list. This gives an overall space complexity of O(n·l), where m = prefixes and k = max movie matches per prefix are negligible add-ons. 
 
-My space usage is dominated by storing the movie titles themselves.
-- Storing n movies in the map takes O(n * l).
-- Storing m prefixes takes O(m * l).
-- The temporary vector of matches uses at most O(k * l).
-- Storing the list of best movies takes O(m * l).
-
-So the Total Space is O(n * l + m * l + k * l).
-Since n (total movies) is generally larger than m (prefixes) or k (matches), this simplifies to:
-O(n * l)
-
-Part 3c: Trade-off Analysis
-
-I primarily designed this for low time complexity.
-I chose a std::map because it keeps keys sorted. This lets me use lower_bound to jump straight to the relevant movies for any prefix, avoiding a scan of the whole list (which would be O(n)). This makes it much faster when n is large.
-
-Was I able to achieve low space complexity as well?
-Yes, I think so. The space complexity is O(n * l), which is about the minimum required to store the input data. The map adds small overhead for the tree structure, but it doesn't duplicate the string data significantly like a trie might if implemented naively with full pointers. So it strikes a good balance of fast lookups without using lots of RAM.
+Part 3c: Explore trade-offs
+I designed my algorithm for a low time complexity since there isn't really a space constraint inherent to or evaluated by the problem. I achieved a lower time complexity using a sorted map so that each prefix is jumped to instead of all n being scanned. I was able to achieve a somewhat low space complexity as well using by storing my data in keyed maps, efficiently storing data so that the space stays close to the input size O(n*l).
 */
 
 bool parseLine(string &line, string &movieName, double &movieRating) {
