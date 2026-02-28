@@ -93,11 +93,12 @@ Part 3a: Time Complexity Analysis
 My time complexity can be affected by all of the following parameters: n (movies), m (prefixes), k (max movie matches per prefix), and l (max title length). Using a sorted map, each prefix search involves a binary search O(l·log n), a scan of its k matches   O(k·l), and a sort of those matches O(k·log k·l). The latter sort dominates time complexity, so one prefix is reflected by O(l·log n + k·log k·l), while all m prefixes are reflected by O(m·l·(log n + k·log k)). 
 
 Running times measured with prefix_large.txt and the following input files:
-input_20_random.csv: 0.011 s
-input_100_random.csv: 0.011 s
-input_1000_random.csv: 0.013 s
-input_76920_random.csv: 0.140 s
-The upward trend in my measured runtimes aligns with the upward trend in my proposed time complexity. As n and k increase, log n and k * log k inflate, driving an overall increase in time complexity.
+input_20_random.csv: 0.011 s (terminal)
+input_100_random.csv: 0.011 s (terminal)
+input_1000_random.csv: 0.064 s (gradescope)
+input_76920_random.csv: 0.115 s (gradescope)
+
+The upward trend in my measured runtimes aligns with the upward trend in my proposed time complexity. The time is flat for small n due to constant overhead, then jumps at 1000 as log n and k * log k inflate and increase the sort cost. 
 
 Part 3b: Space Complexity Analysis
 All movie titles, ratings, and prefixes in the map are stored, as well as a temporary match list. This gives an overall space complexity of O(n·l), where m = prefixes and k = max movie matches per prefix are negligible add-ons. 
